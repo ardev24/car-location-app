@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/car-location-app/static/css/main.323d7611.css",
-    "main.js": "/car-location-app/static/js/main.deab0e60.js",
+    "main.js": "/car-location-app/static/js/main.2f44fdbc.js",
     "static/js/453.0cb48eb7.chunk.js": "/car-location-app/static/js/453.0cb48eb7.chunk.js",
     "index.html": "/car-location-app/index.html",
     "main.323d7611.css.map": "/car-location-app/static/css/main.323d7611.css.map",
-    "main.deab0e60.js.map": "/car-location-app/static/js/main.deab0e60.js.map",
+    "main.2f44fdbc.js.map": "/car-location-app/static/js/main.2f44fdbc.js.map",
     "453.0cb48eb7.chunk.js.map": "/car-location-app/static/js/453.0cb48eb7.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.323d7611.css",
-    "static/js/main.deab0e60.js"
+    "static/js/main.2f44fdbc.js"
   ]
 }
