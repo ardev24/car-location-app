@@ -21,7 +21,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "echo 'Deploying to GitHub Pages...' && gh-pages --verbose -d build"
+    "deploy": "echo 'Deploying to GitHub Pages...' && gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
