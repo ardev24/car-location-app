@@ -1,11 +1,10 @@
 // src/App.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import 'leaflet/dist/leaflet.css'; // Keep this import as it might be needed even without MapContainer
 import L from 'leaflet';
 import { saveLocation } from './firebase'; // Import saveLocation
 
-// (leaflet marker fix - same as before)
+// (leaflet marker fix - keep it in case other components use leaflet in future, minimal overhead)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
 	iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -13,7 +12,6 @@ L.Icon.Default.mergeOptions({
 	shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// useGeolocation hook (same as before - refined error handling is good)
 function useGeolocation() {
 	const [location, setLocation] = useState(null);
 	const [error, setError] = useState(null);
@@ -67,74 +65,105 @@ function useGeolocation() {
 function App() {
 	const { location, error, isLoading, getLocation } = useGeolocation();
 	const [isSending, setIsSending] = useState(false);
-	const [sendLocationFlag, setSendLocationFlag] = useState(false); // NEW: Flag to trigger sending
+	const [sendLocationFlag, setSendLocationFlag] = useState(false);
+	const [message, setMessage] = useState(null); // State for auto-dismissing message
 
-	// useEffect to trigger sending location when sendLocationFlag is set to true
+	// useEffect for sending location (same as before)
 	useEffect(() => {
-    	if (sendLocationFlag && location && !isSending) { // Check flag AND location AND not already sending
+    	if (sendLocationFlag && location && !isSending) {
         	const sendLocationData = async () => {
             	setIsSending(true);
             	try {
-                	console.log("Sending location:", location); // Log location being sent
+                	console.log("Sending location:", location);
                 	await saveLocation(location);
-                	alert('Location fetched and sent successfully!');
+                	setMessage({ text: 'Location fetched and sent successfully!', type: 'success' }); // Set success message
             	} catch (sendError) {
                 	console.error('Error sending location:', sendError);
-                	alert(`Failed to send location: ${sendError.message}`);
+                	setMessage({ text: `Failed to send location: ${sendError.message}`, type: 'error' }); // Set error message
             	} finally {
                 	setIsSending(false);
-                	setSendLocationFlag(false); // Reset the flag after attempting to send
+                	setSendLocationFlag(false);
             	}
         	};
         	sendLocationData();
     	}
-	}, [sendLocationFlag, location, isSending, saveLocation]); // Dependencies: flag, location, isSending, saveLocation
+	}, [sendLocationFlag, location, isSending, saveLocation]);
+
+	// useEffect to auto-dismiss message after 3 seconds
+	useEffect(() => {
+    	if (message) {
+        	const timer = setTimeout(() => {
+            	setMessage(null); // Clear message after timeout
+        	}, 3000); // 3 seconds
+        	return () => clearTimeout(timer); // Cleanup on unmount or message change
+    	}
+	}, [message]);
 
 
 	const handleGetAndSendLocation = () => {
     	if (!isSending) {
-        	getLocation(); // Fetch location
-        	setSendLocationFlag(true); // SET THE FLAG to trigger sending in useEffect when location is updated
+        	getLocation();
+        	setSendLocationFlag(true);
     	}
 	};
 
 
 	return (
-    	<div style={{ padding: '20px' }}>
-        	<h1>Geolocation App</h1>
+    	<div style={{
+        	display: 'flex',
+        	flexDirection: 'column',
+        	alignItems: 'center', // Center horizontally
+        	justifyContent: 'flex-start', // Align items to the top
+        	height: '100vh', // Make the container take full viewport height
+        	padding: '20px',
+        	fontFamily: 'sans-serif'
+    	}}>
+        	<h1>Student Drop-off</h1>
 
         	<button
             	onClick={handleGetAndSendLocation}
             	disabled={isLoading || isSending}
+            	style={{
+                	padding: '15px 30px',
+                	fontSize: '1.2em',
+                	fontWeight: 'bold',
+                	backgroundColor: '#4CAF50', // Green color
+                	color: 'white',
+                	border: 'none',
+                	borderRadius: '8px',
+                	cursor: 'pointer',
+                	marginBottom: '20px', // Add some space below the button
+            	}}
         	>
-            	{isLoading ? 'Getting Location...' : (isSending ? 'Sending Location...' : 'Get and Send Location')}
+            	{isLoading ? 'Getting Location...' : (isSending ? 'Sending Location...' : 'Mark Drop-off Location')}
         	</button>
 
-        	{error && <p style={{ color: 'red' }}>Error: {error}</p>}
+        	{error && <p style={{ color: 'red', marginBottom: '10px' }}>Error: {error}</p>}
+
+        	{message && (
+            	<div
+                	style={{
+                    	backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da',
+                    	color: message.type === 'success' ? '#155724' : '#721c24',
+                    	borderColor: message.type === 'success' ? '#c3e6cb' : '#f5c6cb',
+                    	padding: '10px 15px',
+                    	marginBottom: '10px',
+                    	borderRadius: '4px',
+                    	border: '1px solid',
+                	}}
+            	>
+                	{message.text}
+            	</div>
+        	)}
 
         	{location && (
             	<div>
-                	<p>Latitude: {location.latitude}</p>
-                	<p>Longitude: {location.longitude}</p>
-                	<p>Accuracy: {location.accuracy} meters</p>
-                	<p>Timestamp: {new Date(location.timestamp).toLocaleString()}</p>
-
-                	{/* Map Container (same as before) */}
-                	<MapContainer
-                    	center={[location.latitude, location.longitude]}
-                    	zoom={13}
-                    	style={{ height: '400px', width: '100%' }}
-                	>
-                    	<TileLayer
-                        	attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        	url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    	/>
-                    	<Marker position={[location.latitude, location.longitude]}>
-                        	<Popup>
-                            	Your Location <br /> Accuracy: {location.accuracy} meters
-                        	</Popup>
-                    	</Marker>
-                	</MapContainer>
+                	{/* Removed MapContainer */}
+                	<p>Location Recorded!</p>
+                	<p style={{ fontSize: '0.8em', color: '#777' }}>
+                    	Latitude: {location.latitude}, Longitude: {location.longitude} <br />
+                    	Accuracy: {location.accuracy} meters, Timestamp: {new Date(location.timestamp).toLocaleString()}
+                	</p>
             	</div>
         	)}
     	</div>
